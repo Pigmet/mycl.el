@@ -6,3 +6,4 @@
     (insert "(comment")
     (end-of-buffer)
     (insert ")")))
+

@@ -33,19 +33,20 @@
 	       (format "(%s %s)" path cl)))
        (s-join "\n")))
 
+;;TODO: Wrap up the classes belonging to the
+;; same namespace. How to merge hash-tables for such a purpose?
+
 (defun mycl-clojure-import ()
   "Converts Java import semtences to Clojure ones."
   (interactive)
   (if (use-region-p)
-      
       (mylet [beg (region-beginning)
 		  end (region-end)
 		  res
 		  (-> (buffer-substring-no-properties beg end)
 		      mycl--import-sentences
 		      kill-new)]
-	     (message (format "Copied %s." res)))
-
+	     (message (format "Copied %s in the clipboard." res)))
     (error "no region is active")))
 
 (provide 'mycl)

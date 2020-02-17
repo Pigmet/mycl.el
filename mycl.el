@@ -21,7 +21,7 @@
 (defun mycl--parse-import-line (s)
   "Returns a list of (path class)."
   (mylet [((_ path class)) (s-match-strings-all import-regex s)]
-	 (list path class)))
+	 (a-list  path   class)))
 
 (defun mycl--import-sentences (s)
   (->> s
@@ -29,12 +29,11 @@
        (-map 's-trim)
        (-filter (-lambda (s) (s-matches-p import-regex s)))
        (-map 'mycl--parse-import-line)
-       (-map (-lambda ((path cl))
-	       (format "(%s %s)" path cl)))
-       (s-join "\n")))
-
-;;TODO: Wrap up the classes belonging to the
-;; same namespace. How to merge hash-tables for such a purpose?
+       (apply 'a-merge-with (lambda (x y) (mystr x " " y)))
+       (a-reduce-kv (lambda (acc k v)
+		      (mystr acc  (format "(%s %s)\n" k v)))
+		    ""
+		    )))
 
 (defun mycl-clojure-import ()
   "Converts Java import semtences to Clojure ones."

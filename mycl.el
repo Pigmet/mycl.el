@@ -51,23 +51,32 @@
 ;; boot ;;
 ;;;;;;;;;;
 
+;; gettin gcompile error on 'boot cljs'. 
+
 (defun mycl--make-dir (path)
   (shell-command (format "mkdir -p %s" path))
   path) 
 
+;; TODO: simple command to do the same ->
+;; mkdir -p modern-cljs/{src/cljs/modern_cljs,html}
+
 (defun mycl--boot-make-dir
     (project-name)
   "Takes project name for a boot project and creates scaffold
-directory structure. Returns an alist of resulting paths."
+directory structure. Returns an alist of the resulting paths."
   (mylet [dir (mystr default-directory  project-name "/")
 	      dir (mycl--make-dir dir)
 	      html (mycl--make-dir  (mystr dir "html/"))
-	      src (mycl--make-dir  (mystr dir "src/"))
-	      cljs (mycl--make-dir (mystr dir "cljs/" project-name "/"))]
-	 (a-list :dir dir :html html :src src :cljs cljs)))
+	      src (mycl--make-dir  (mystr dir "src/cljs/" project-name "/"))]
+	 (a-list :dir dir :html html :src src)))
 
 (defun mycl--write-file (path s)
   (with-temp-file path (insert s)))
+
+(defun mycl--read-file (path)
+  (with-temp-buffer
+    (insert-file-contents path)
+    (buffer-string)))
 
 (defun mycl--boot-new-project-impl (project-name)
   (mylet [p project-name
@@ -75,10 +84,11 @@ directory structure. Returns an alist of resulting paths."
 	    dir (a-get res :dir)
 	    html (a-get res :html)
 	    src (a-get res :src)
-	    cljs (a-get res :cljs)]
-	 (mycl--write-file (mystr dir "build.boot") "")
-	 (mycl--write-file (mystr html "index.html") "")
-	 (mycl--write-file (mystr cljs "core.cljs") "")
+	    html-s (mycl--read-file (mystr default-directory "/boot/html"))
+	    build-s (mycl--read-file (mystr default-directory "/boot/build"))]
+	 (mycl--write-file (mystr dir "build.boot") build-s)
+	 (mycl--write-file (mystr html "index.html") html-s)
+	 (mycl--write-file (mystr src "core.cljs") "")
 	 (message (format "new boot project %s was created." p))))
 
 (defun mycl-boot-new-project()
@@ -86,7 +96,21 @@ directory structure. Returns an alist of resulting paths."
   (mylet [project-name (read-string "Create a new boot project: ")]
 	 (mycl--boot-new-project-impl project-name)))
 
-;;(mycl--boot-new-project-impl "demo4")
+;;;;;;;;;;;;;;
+;; leinigen ;;
+;;;;;;;;;;;;;;
+
+(setq leinigen-opts (a-list "normal" "" "app" "app"))
+
+
+(defun mycl-new-project-leinigen()
+  (interactive)
+  (mylet [p (read-string "Enter project name: ")
+	    k (ido-completing-read "Select option: " (a-keys leinigen-opts))
+	    opt (a-get leinigen-opts k)]
+	 (when (y-or-n-p (format "Create new project %s ?" p))
+	   (shell-command
+	    (format "lein new %s %s" opt p)))))
 
 
 (provide 'mycl)

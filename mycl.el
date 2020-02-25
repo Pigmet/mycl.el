@@ -102,21 +102,49 @@ directory structure. Returns an alist of the resulting paths."
 ;; leinigen ;;
 ;;;;;;;;;;;;;;
 
-(setq leinigen-opts (a-list "normal" "" "app" "app"))
+(setq leinigen-opts
+      (a-list :normal
+	      (lambda (s) (format "lein new %s"s ))
+	      :app
+	      (lambda (s) (format "lein new app %s" s))
+	      :figwheel-main
+	      (lambda (s)
+		(format
+		 "lein new figwheel-main %s -- --reagent" s))))
 
 (defun mycl-new-project-leinigen()
   (interactive)
   (mylet [p (read-string "Enter project name: ")
-	    k (ido-completing-read "Select option: " (a-keys leinigen-opts))
-	    opt (a-get leinigen-opts k)]
-	 (when (y-or-n-p (format "Create new project %s ?" p))
-	   (shell-command
-	    (format "lein new %s %s" opt p)))))
+	    type (->> (a-keys leinigen-opts)
+		      (-map 'mystr)
+		      (ido-completing-read "Select type: ")
+		      (intern-soft))
+	    cmd (funcall (a-get leinigen-opts type) p)]
+	 (when (y-or-n-p
+		(format "Create a new project in %s ?" default-directory))
+	   (shell-command cmd))))
 
+(setq mycl-buff (generate-new-buffer "*mycl*"))
 
+(defvar mycl-piggieback-version "0.4.2")
 
+(defun mycl--fidgweel-dep-info ()
+  (a-list :dependencies
+	  (format "[cider/piggieback \"%s\"]]" mycl-piggieback-version)
+	  :repl-options "{:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}" ))
 
-
+(defun mycl-figwheel-dep-hint ()
+  (interactive)
+  (with-current-buffer mycl-buff
+    (erase-buffer)
+    (insert
+     (a-reduce-kv
+      (lambda (acc k v)
+	(mystr acc  (intern-soft k) " " v "\n"))
+      ""
+      (mycl--fidgweel-dep-info)))
+    (beginning-of-buffer))
+  (switch-to-buffer-other-window mycl-buff))
 
 (provide 'mycl)
 

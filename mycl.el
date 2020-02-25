@@ -1,5 +1,7 @@
 ;; for clojure code editing.
 
+(require 'a)
+
 (defun mycl-comment-below()
   (interactive)
   (save-excursion
@@ -102,7 +104,6 @@ directory structure. Returns an alist of the resulting paths."
 
 (setq leinigen-opts (a-list "normal" "" "app" "app"))
 
-
 (defun mycl-new-project-leinigen()
   (interactive)
   (mylet [p (read-string "Enter project name: ")
@@ -111,6 +112,10 @@ directory structure. Returns an alist of the resulting paths."
 	 (when (y-or-n-p (format "Create new project %s ?" p))
 	   (shell-command
 	    (format "lein new %s %s" opt p)))))
+
+
+
+
 
 
 (provide 'mycl)

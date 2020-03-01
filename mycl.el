@@ -2,6 +2,12 @@
 
 (require 'a)
 
+(defun mycl--display-in-buff(buff s)
+  (with-current-buffer buff
+    (erase-buffer)
+    (insert s))
+  (switch-to-buffer-other-window buff))
+
 (defun mycl-comment-below()
   (interactive)
   (save-excursion
@@ -102,49 +108,57 @@ directory structure. Returns an alist of the resulting paths."
 ;; leinigen ;;
 ;;;;;;;;;;;;;;
 
-(setq leinigen-opts
-      (a-list :normal
-	      (lambda (s) (format "lein new %s"s ))
-	      :app
-	      (lambda (s) (format "lein new app %s" s))
-	      :figwheel-main
-	      (lambda (s)
-		(format
-		 "lein new figwheel-main %s -- --reagent" s))))
-
 (defun mycl-new-project-leinigen()
   (interactive)
-  (mylet [p (read-string "Enter project name: ")
-	    type (->> (a-keys leinigen-opts)
-		      (-map 'mystr)
-		      (ido-completing-read "Select type: ")
-		      (intern-soft))
-	    cmd (funcall (a-get leinigen-opts type) p)]
+  (mylet [ leinigen-opts
+	   (a-list :normal
+		   (lambda (s) (format "lein new %s"s ))
+		   :app
+		   (lambda (s) (format "lein new app %s" s))
+		   :figwheel-main
+		   (lambda (s)
+		     (format
+		      "lein new figwheel-main %s -- --reagent" s)))
+	   
+	   p (read-string "Enter project name: ")
+	   
+	   type (->> (a-keys leinigen-opts)
+		     (-map 'mystr)
+		     (ido-completing-read "Select type: ")
+		     (intern-soft))
+	   
+	   cmd (funcall (a-get leinigen-opts type) p)]
 	 (when (y-or-n-p
 		(format "Create a new project in %s ?" default-directory))
 	   (shell-command cmd))))
 
 (setq mycl-buff (generate-new-buffer "*mycl*"))
 
-(defvar mycl-piggieback-version "0.4.2")
+(setq mycl-cljs-deps-data
+      (a-list :dependencies
+	      (a-list
+	       :om (list "org.omcljs/om" "1.0.0-beta1")
+	       :piggieback (list "cider/piggieback" "0.4.2"))
+	      :repl-options
+	      ":repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}"
+	      ))
 
-(defun mycl--fidgweel-dep-info ()
-  (a-list :dependencies
-	  (format "[cider/piggieback \"%s\"]]" mycl-piggieback-version)
-	  :repl-options "{:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}" ))
+(defun mycl--figwheel-hint-string()
+  (mylet [(&alist :dependencies dep :repl-options repl) mycl-cljs-deps-data]
+	 (with-temp-buffer
+	   (insert ":dependencies\n\n")
+	   (loop for (_ . v) in dep
+		 for (name  ver) = v
+		 do
+		 (insert (format "[%s \"%s\"]\n"  name ver )))
+	   (insert "\n\n:repl-options\n\n" repl)
+	   (buffer-string))))
 
 (defun mycl-figwheel-dep-hint ()
+  "Copy and paste this in project.clj when starting a figweel-main project."
   (interactive)
-  (with-current-buffer mycl-buff
-    (erase-buffer)
-    (insert
-     (a-reduce-kv
-      (lambda (acc k v)
-	(mystr acc  (intern-soft k) " " v "\n"))
-      ""
-      (mycl--fidgweel-dep-info)))
-    (beginning-of-buffer))
-  (switch-to-buffer-other-window mycl-buff))
+  (mycl--display-in-buff mycl-buff
+			 (mycl--figwheel-hint-string )))
 
 (provide 'mycl)
 

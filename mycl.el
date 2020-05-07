@@ -137,8 +137,6 @@ directory structure. Returns an alist of the resulting paths."
 (setq mycl-repl-option-figwheel
       ":repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}")
 
-
-
 (setq mycl-cljs-deps-data
       (a-list :dependencies
 	      (a-list

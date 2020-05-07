@@ -197,9 +197,10 @@ directory structure. Returns an alist of the resulting paths."
 	     
 	     match? (not (zerop (length res)))]
 	 (if match?
-	     (progn
-	       (kill-new res)
-	       (message "Copied %s" res))
+	     (save-excursion
+	       (delete-region beg end)
+	       (goto-char beg)
+	       (insert res))
 	   (error "invalid input"))))
 
 (provide 'mycl)

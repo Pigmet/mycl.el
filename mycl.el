@@ -134,13 +134,21 @@ directory structure. Returns an alist of the resulting paths."
 
 (setq mycl-buff (generate-new-buffer "*mycl*"))
 
+(setq mycl-repl-option-figwheel
+      ":repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}")
+
+
+
 (setq mycl-cljs-deps-data
       (a-list :dependencies
 	      (a-list
 	       :om (list "org.omcljs/om" "1.0.0-beta1")
-	       :piggieback (list "cider/piggieback" "0.4.2"))
-	      :repl-options
-	      ":repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}"
+	       :piggieback (list "cider/piggieback" "0.4.2")
+	       :react (list "cljsjs/react" "16.6.0-0")
+	       :react-dom (list "cljsjs/react-dom" "16.6.0-0")
+	       :cljss (list "clj-commons/cljss" "1.6.4")
+	       :sabnolo (list "sablono" "0.8.6"))
+	      :repl-options mycl-repl-option-figwheel
 	      ))
 
 (defun mycl--figwheel-hint-string()
@@ -159,6 +167,15 @@ directory structure. Returns an alist of the resulting paths."
   (interactive)
   (mycl--display-in-buff mycl-buff
 			 (mycl--figwheel-hint-string )))
+
+;; convert maven depndency
+
+(setq demo-test
+      "<dependency>
+<groupId>org.apache.pdfbox</groupId>
+<artifactId>pdfbox</artifactId>
+<version>1.8.3</version>
+</dependency>")
 
 (provide 'mycl)
 

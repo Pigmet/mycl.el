@@ -170,12 +170,38 @@ directory structure. Returns an alist of the resulting paths."
 
 ;; convert maven depndency
 
-(setq demo-test
-      "<dependency>
-<groupId>org.apache.pdfbox</groupId>
-<artifactId>pdfbox</artifactId>
-<version>1.8.3</version>
-</dependency>")
+(defun mycl-maven-to-leinigen-dependencies
+    (beg end)
+  "Converts the string in the region."
+  (interactive "r")
+  (mylet [re (rx "<groupId>" (group-n 1 ( + (not (any space "\n"))))
+		 "</groupId>"
+		 (+ (or space "\n"))
+		 "<artifactId>" (group-n 2 (+ (not (any space "\n"))))
+		 "</artifactId>"
+		 (+ (or space "\n"))
+		 "<version>" (group-n 3 (+ (not (any space "\n"))))
+		 "</version>")
+	     
+	     s (buffer-substring-no-properties beg end)
+	     
+	     res (->> (s-match-strings-all re s)
+		      (-map (-lambda
+			      ((_ project name version))
+			      (format "[%s/%s %s]"
+				      project name version )))
+		      (-reduce-from
+		       (-lambda (acc s) (concat acc "\n" s))
+		       "")
+		      s-trim)
+	     
+	     match? (not (zerop (length res)))]
+	 (if match?
+	     (progn
+	       (kill-new res)
+	       (message "Copied %s" res))
+	   (error "invalid input"))))
 
 (provide 'mycl)
+
 
